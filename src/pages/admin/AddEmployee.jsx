@@ -3,97 +3,157 @@ import { supabase } from "../../../supabaseClient";
 import { useNavigate } from "react-router-dom";
 
 export default function AddEmployee() {
-  const [name, setName] = useState("");
-  const [dob, setDob] = useState("");
-  const [departmentId, setDepartmentId] = useState("");
+  const navigate = useNavigate();
+
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    dob: "",
+    department_id: "",
+  });
+
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const navigate = useNavigate();
-
   useEffect(() => {
-    fetchDepartments();
-  }, []);
-
-  async function fetchDepartments() {
-    const { data } = await supabase
+    supabase
       .from("departments")
       .select("id, name")
-      .order("name");
+      .order("name")
+      .then(({ data }) => setDepartments(data || []));
+  }, []);
 
-    setDepartments(data || []);
-  }
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setLoading(true);
+    setError("");
 
-const { data: authData, error: authError } =
-  await supabase.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true,
-  });
+    // 1️⃣ Create auth user
+    const { data: authData, error: authError } =
+      await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+      });
 
-if (authError) {
-  setError(authError.message);
-  setLoading(false);
-  return;
-}
+    if (authError) {
+      setError(authError.message);
+      setLoading(false);
+      return;
+    }
 
-const { error } = await supabase.from("employees").insert({
-  user_id: authData.user.id,
-  name,
-  dob,
-  department_id: departmentId,
-});
+    // 2️⃣ Insert employee profile
+    const { error: empError } = await supabase.from("employees").insert({
+      user_id: authData.user.id,
+      name: form.name,
+      dob: form.dob,
+      department_id: form.department_id,
+    });
 
+    if (empError) {
+      setError(empError.message);
+      setLoading(false);
+      return;
+    }
+
+    navigate("/admin/employees");
   }
 
   return (
-    <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow">
-      <h1 className="text-2xl font-bold mb-6 text-center">
-        Add New Employee
-      </h1>
+    <div className="max-w-xl mx-auto bg-white p-6 rounded-xl shadow">
+      <h1 className="text-2xl font-bold mb-6">Add Employee</h1>
 
-      {error && <p className="text-red-500 mb-4">{error}</p>}
+      {error && (
+        <p className="mb-4 text-red-500 text-sm">{error}</p>
+      )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          placeholder="Employee Name"
-          className="w-full border rounded-lg px-4 py-2"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+        <Input
+          label="Name"
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          required
         />
 
-        <input
+        <Input
+          label="Email"
+          type="email"
+          name="email"
+          value={form.email}
+          onChange={handleChange}
+          required
+        />
+
+        <Input
+          label="Password"
+          type="password"
+          name="password"
+          value={form.password}
+          onChange={handleChange}
+          required
+        />
+
+        <Input
+          label="Date of Birth"
           type="date"
-          className="w-full border rounded-lg px-4 py-2"
-          value={dob}
-          onChange={(e) => setDob(e.target.value)}
+          name="dob"
+          value={form.dob}
+          onChange={handleChange}
+          required
         />
 
-        <select
-          className="w-full border rounded-lg px-4 py-2"
-          value={departmentId}
-          onChange={(e) => setDepartmentId(e.target.value)}
-        >
-          <option value="">Select Department</option>
-          {departments.map((dept) => (
-            <option key={dept.id} value={dept.id}>
-              {dept.name}
-            </option>
-          ))}
-        </select>
+        <div>
+          <label className="text-sm text-gray-600">Department</label>
+          <select
+            name="department_id"
+            value={form.department_id}
+            onChange={handleChange}
+            className="w-full border rounded-lg px-4 py-2 mt-1"
+            required
+          >
+            <option value="">Select department</option>
+            {departments.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
-        <button
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-        >
-          Add Employee
-        </button>
+        <div className="flex justify-end gap-3 pt-4">
+          <button
+            type="button"
+            onClick={() => navigate("/admin/employees")}
+            className="text-gray-600"
+          >
+            Cancel
+          </button>
+          <button
+            disabled={loading}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg disabled:opacity-50"
+          >
+            Create
+          </button>
+        </div>
       </form>
+    </div>
+  );
+}
+
+function Input({ label, ...props }) {
+  return (
+    <div>
+      <label className="text-sm text-gray-600">{label}</label>
+      <input
+        {...props}
+        className="w-full border rounded-lg px-4 py-2 mt-1"
+      />
     </div>
   );
 }

@@ -1,63 +1,105 @@
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
-import { supabase } from "../../../supabaseClient.js";
-
+import { supabase } from "../../../supabaseClient";
+import { useState } from "react";
+import { Menu, X } from "lucide-react";
 
 export default function AdminLayout() {
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    localStorage.removeItem("login_time");
     navigate("/");
   };
 
   const linkClasses = ({ isActive }) =>
-  `block px-4 py-2 rounded-lg transition ${
-    isActive
-      ? "bg-indigo-100 text-gray-800"
-      : "text-gray-800 hover:bg-gray-700 hover:text-white"
-  }`;
+    `block px-4 py-3 rounded-lg text-lg transition ${
+      isActive
+        ? "bg-indigo-100 text-gray-900"
+        : "text-gray-700 hover:bg-gray-800 hover:text-white"
+    }`;
 
   return (
-    
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 flex">
+      {/* MOBILE FULLSCREEN DRAWER */}
+      {open && (
+        <div className="fixed inset-0 z-40 bg-white flex flex-col lg:hidden">
+          <div className="flex items-center justify-between p-6 border-b">
+            <h2 className="text-xl font-bold">StaffNet Admin</h2>
+            <button onClick={() => setOpen(false)}>
+              <X size={28} />
+            </button>
+          </div>
 
+          <nav className="flex-1 px-6 py-4 space-y-2">
+            <NavLink to="/admin" end className={linkClasses} onClick={() => setOpen(false)}>
+              Dashboard
+            </NavLink>
+            <NavLink to="/admin/departments" className={linkClasses} onClick={() => setOpen(false)}>
+              Departments
+            </NavLink>
+            <NavLink to="/admin/employees" className={linkClasses} onClick={() => setOpen(false)}>
+              Employees
+            </NavLink>
+            <NavLink to="/admin/leaves" className={linkClasses} onClick={() => setOpen(false)}>
+              Leave Management
+            </NavLink>
+            <NavLink to="/admin/settings" className={linkClasses} onClick={() => setOpen(false)}>
+              Settings
+            </NavLink>
+          </nav>
 
-      {/* SIDEBAR */}
-      <aside className="w-64 bg-white shadow-md flex flex-col">
+          <button
+            onClick={handleLogout}
+            className="m-6 bg-red-500 text-white py-3 rounded-lg text-lg"
+          >
+            Logout
+          </button>
+        </div>
+      )}
+
+      {/* DESKTOP SIDEBAR */}
+      <aside className="hidden lg:flex w-64 bg-white shadow-md flex-col">
         <div className="p-6 text-xl font-bold">StaffNet Admin</div>
 
         <nav className="px-4 space-y-2 flex-1">
           <NavLink to="/admin" end className={linkClasses}>
-            Dashboard Overview
+            Dashboard
           </NavLink>
-
           <NavLink to="/admin/departments" className={linkClasses}>
             Departments
           </NavLink>
-
           <NavLink to="/admin/employees" className={linkClasses}>
             Employees
           </NavLink>
-
           <NavLink to="/admin/leaves" className={linkClasses}>
             Leave Management
           </NavLink>
-
+          <NavLink to="/admin/settings" className={linkClasses}>
+            Settings
+          </NavLink>
         </nav>
 
         <button
           onClick={handleLogout}
-          className="m-4 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600"
+          className="m-4 bg-red-500 text-white py-2 rounded-lg"
         >
           Logout
         </button>
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 p-8">
-        <Outlet />  
-      </main>
+      <main className="flex-1 p-4 sm:p-6 lg:p-8">
+        {/* MOBILE HEADER */}
+        <div className="lg:hidden mb-4">
+          <button onClick={() => setOpen(true)}>
+            <Menu size={28} />
+          </button>
+        </div>
 
+        <Outlet />
+      </main>
     </div>
   );
 }

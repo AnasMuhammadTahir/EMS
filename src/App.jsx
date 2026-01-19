@@ -17,6 +17,7 @@ import EmployeeSalary from "./pages/admin/EmployeeSalary";
 import EditEmployee from "./pages/admin/EditEmployee";
 import AdminLeaves from "./pages/admin/AdminLeaves";
 
+
 // Employee
 import EmployeeLayout from "./Components/employee/EmployeeLayout";
 import EmployeeDashboard from "./pages/employee/EmployeeDashboard";
@@ -24,6 +25,7 @@ import MyProfile from "./pages/employee/MyProfile";
 import EmployeeLeaves from "./pages/employee/Leaves/Leaves";
 import ApplyLeave from "./pages/employee/Leaves/ApplyLeave";
 import Salary from "./pages/employee/Salary";
+import Settings from "./pages/Settings";
 
 export default function App() {
   return (
@@ -47,6 +49,8 @@ export default function App() {
           <Route path="employees/:id/edit" element={<EditEmployee />} />
 
           <Route path="leaves" element={<AdminLeaves />} />
+
+          <Route path="/admin/settings" element={<Settings />} />
         </Route>
       </Route>
 
@@ -58,6 +62,8 @@ export default function App() {
           <Route path="leaves" element={<EmployeeLeaves />} />
           <Route path="leaves/apply" element={<ApplyLeave />} />
           <Route path="salary" element={<Salary />} />
+          <Route path="/employee/settings" element={<Settings />} />
+
         </Route>
       </Route>
     </Routes>
