@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "../../supabaseClient.js";
+import { supabase } from "../../supabaseClient";
 import { ArrowLeft } from "lucide-react";
 
 export default function Signup() {
@@ -52,12 +52,13 @@ export default function Signup() {
       return;
     }
 
-    // 3️⃣ Create employee (MINIMAL DATA)
+    // 3️⃣ Create employee (ONLY ONCE)
     const { error: employeeError } = await supabase
       .from("employees")
       .insert({
         user_id: userId,
         name,
+        emp_id: `EMP-${Date.now()}`,
       });
 
     if (employeeError) {

@@ -27,8 +27,6 @@ import EmployeeDashboard from "./pages/employee/EmployeeDashboard";
 import MyProfile from "./pages/employee/MyProfile";
 import EmployeeLeaves from "./pages/employee/Leaves/Leaves";
 import Salary from "./pages/employee/Salary";
-import EditProfileRequest from "./pages/employee/EditProfileRequest";
-import ProfileEditRequests from "./pages/admin/ProfileEditRequests";
 
 
 export default function App() {
@@ -54,7 +52,6 @@ export default function App() {
           <Route path="employees/:id/salary" element={<EmployeeSalary />} />
 
           <Route path="leaves" element={<AdminLeaves />} />
-          <Route path="/admin/profile-requests" element={<ProfileEditRequests />} />
           <Route
               path="/admin/employees/:id/edit"
               element={
@@ -84,7 +81,6 @@ export default function App() {
         <Route path="profile" element={<MyProfile />} />
         <Route path="leaves" element={<EmployeeLeaves />} />
         <Route path="salary" element={<Salary />} />
-        <Route path="profile/edit-request" element={<EditProfileRequest />} />
 
       </Route>
 

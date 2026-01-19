@@ -43,10 +43,6 @@ export default function AdminLayout() {
             Leave Management
           </NavLink>
 
-          <NavLink to="/admin/profile-requests" className={linkClasses} >
-            Profile Requests
-          </NavLink>
-
         </nav>
 
         <button
