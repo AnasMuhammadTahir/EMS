@@ -67,7 +67,7 @@ export default function MyProfile() {
             <ProfileRow label="Employee ID" value={employee.id} />
             <ProfileRow
               label="Date of Birth"
-              value={employee.date_of_birth || "-"}
+              value={employee.dob || "-"}
             />
             <ProfileRow
               label="Department"
