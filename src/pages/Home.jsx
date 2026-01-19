@@ -1,4 +1,4 @@
-import Navbar from "../components/Navbar";
+import Navbar from "../Components/Navbar";
 import { useNavigate } from "react-router-dom";
 import { Users, Briefcase, Wallet, CheckCircle } from "lucide-react";
 
