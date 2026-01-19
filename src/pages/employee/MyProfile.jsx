@@ -1,118 +1,104 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../supabaseClient";
-import { useNavigate } from "react-router-dom";
 
 export default function MyProfile() {
-  const [employee, setEmployee] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [salary, setSalary] = useState(null);
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchProfile() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) return;
-
-      // Employee data
-      const { data: employeeData } = await supabase
-        .from("employees")
-        .select(`
-          id,
-          name,
-          date_of_birth,
-          departments ( name )
-        `)
-        .eq("user_id", user.id)
-        .single();
-
-      if (!employeeData) return;
-      setEmployee(employeeData);
-
-      // Latest salary
-      const { data: salaryData } = await supabase
-        .from("salaries")
-        .select("salary, allowance, deduction, total")
-        .eq("employee_id", employeeData.id)
-        .order("pay_date", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      setSalary(salaryData);
-    }
-
     fetchProfile();
   }, []);
 
-  if (!employee) return null;
+  async function fetchProfile() {
+    setLoading(true);
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) return;
+
+    // Employee profile
+    const { data: employee } = await supabase
+      .from("employees")
+      .select(
+        `
+        id,
+        name,
+        emp_id,
+        dob,
+        departments ( name )
+      `
+      )
+      .eq("user_id", user.id)
+      .single();
+
+    setProfile(employee);
+
+    // Salary info
+    const { data: salaryData } = await supabase
+      .from("salaries")
+      .select("salary, pay_date, status")
+      .eq("employee_id", employee.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    setSalary(salaryData || null);
+
+    setLoading(false);
+  }
+
+  if (loading) {
+    return <p className="mt-10">Loading profile...</p>;
+  }
 
   return (
-    <div className="flex justify-center items-center min-h-[80vh]">
-      <div className="bg-white rounded-xl shadow p-8 w-full max-w-3xl">
-        <h1 className="text-2xl font-bold mb-6 text-center">
-          My Profile
-        </h1>
+    <div className="flex justify-center mt-10">
+      <div className="bg-white shadow rounded-xl p-8 w-full max-w-2xl flex gap-6">
+        
+        {/* Profile Image */}
+        <div className="w-28 h-28 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 text-3xl">
+          👤
+        </div>
 
-        {/* Profile section */}
-        <div className="flex flex-col md:flex-row gap-8 items-center">
-          <img
-            src={`https://ui-avatars.com/api/?name=${employee.name}&background=2563eb&color=fff&size=128`}
-            alt="Profile"
-            className="w-32 h-32 rounded-full border"
+        {/* Info */}
+        <div className="flex-1">
+          <h2 className="text-xl font-semibold mb-4">My Profile</h2>
+
+          <Info label="Name" value={profile?.name} />
+          <Info label="Employee ID" value={profile?.emp_id} />
+          <Info label="Department" value={profile?.departments?.name || "-"} />
+          <Info label="Date of Birth" value={profile?.dob || "-"} />
+
+          <hr className="my-4" />
+
+          <h3 className="font-semibold mb-2">Salary Info</h3>
+
+          <Info label="Salary" value={salary?.salary ?? "-"} />
+          <Info label="Pay Date" value={salary?.pay_date ?? "-"} />
+          <Info
+            label="Status"
+            value={
+              salary?.status === "paid"
+                ? "Paid ✅"
+                : salary?.status === "unpaid"
+                ? "Unpaid ❌"
+                : "-"
+            }
           />
-
-          <div className="flex-1 space-y-4 w-full">
-            <ProfileRow label="Name" value={employee.name} />
-            <ProfileRow label="Employee ID" value={employee.id} />
-            <ProfileRow
-              label="Date of Birth"
-              value={employee.dob || "-"}
-            />
-            <ProfileRow
-              label="Department"
-              value={employee.departments?.name || "-"}
-            />
-          </div>
-        </div>
-
-        {/* Salary section */}
-        <div className="mt-8 border-t pt-6">
-          <h2 className="text-lg font-semibold mb-4">
-            Salary Information
-          </h2>
-
-          {salary ? (
-            <div className="grid grid-cols-2 gap-4">
-              <ProfileRow label="Base Salary" value={salary.salary} />
-              <ProfileRow label="Allowance" value={salary.allowance} />
-              <ProfileRow label="Deduction" value={salary.deduction} />
-              <ProfileRow label="Total Pay" value={salary.total} />
-            </div>
-          ) : (
-            <p className="text-gray-500">No salary record available</p>
-          )}
-        </div>
-
-        {/* Edit request */}
-        <div className="mt-8 text-center">
-          <button
-            onClick={() => navigate("/employee/profile/edit-request")}
-            className="px-6 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50"
-          >
-            Request Profile Edit
-          </button>
         </div>
       </div>
     </div>
   );
 }
 
-function ProfileRow({ label, value }) {
+function Info({ label, value }) {
   return (
-    <div className="flex justify-between border-b border-gray-200 pb-2">
-      <span className="text-gray-600">{label}</span>
-      <span className="font-medium">{value ?? "-"}</span>
+    <div className="flex justify-between mb-2">
+      <span className="text-gray-500">{label}</span>
+      <span className="font-medium">{value}</span>
     </div>
   );
 }
