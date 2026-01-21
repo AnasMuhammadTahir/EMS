@@ -33,7 +33,7 @@ export default function MyProfile() {
         name,
         emp_id,
         dob,
-        departments:department_id (
+        department:departments (
           name
         )
       `)
@@ -90,7 +90,7 @@ export default function MyProfile() {
           <Info label="Employee ID" value={profile?.emp_id || "-"} />
           <Info
             label="Department"
-            value={profile?.departments?.name || "-"}
+            value={profile?.department?.name || "-"}
           />
           <Info label="Date of Birth" value={profile?.dob || "-"} />
 

@@ -13,7 +13,7 @@ export default function Login() {
   // 🔁 Auto-redirect if session exists and is valid
   useEffect(() => {
     const checkSession = async () => {
-      const loginTime = localStorage.getItem("login_time");
+      const loginTime = Number(localStorage.getItem("login_time"));
 
       if (!loginTime) return;
 

@@ -8,10 +8,16 @@ export default function AdminLayout() {
   const [open, setOpen] = useState(false);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.removeItem("login_time");
-    navigate("/");
-  };
+  await supabase.auth.signOut();
+
+  // clear your custom session data
+  localStorage.removeItem("login_time");
+
+  // optional: clear everything auth-related
+  localStorage.removeItem("supabase.auth.token");
+
+  navigate("/login");
+};
 
   const linkClasses = ({ isActive }) =>
     `block px-4 py-3 rounded-lg text-lg transition ${
