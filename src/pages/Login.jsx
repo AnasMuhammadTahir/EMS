@@ -92,7 +92,7 @@ export default function Login() {
           Welcome Back
         </h2>
         <p className="text-center text-gray-500 mb-8">
-          Sign in to your EMS Lite account
+          Sign in to your StaffNet account
         </p>
 
         {error && (
