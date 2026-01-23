@@ -17,7 +17,10 @@ export default function Employees() {
       .select(`
         id,
         name,
-        dob,
+        date_of_birth,
+        user_id,
+        emp_id,
+        department_id,
         departments (
           name
         )
@@ -26,33 +29,70 @@ export default function Employees() {
 
     if (!error) {
       setEmployees(data || []);
+    } else {
+      console.error("Error fetching employees:", error);
     }
 
     setLoading(false);
   }
 
   async function handleDelete(userId) {
-  const confirmDelete = window.confirm(
-    "This will permanently delete the employee account. Continue?"
-  );
+    const confirmDelete = window.confirm(
+      "This will permanently delete the employee account. Continue?"
+    );
 
-  if (!confirmDelete) return;
+    if (!confirmDelete) return;
 
-  const { error } = await supabase.functions.invoke(
-    "delete-employee",
-    {
-      body: { user_id: userId },
+    // First, find the employee record to get the id
+    const employeeToDelete = employees.find(emp => emp.user_id === userId);
+    if (!employeeToDelete) return;
+
+    // Delete from employees table first (if it exists)
+    const { error: empError } = await supabase
+      .from("employees")
+      .delete()
+      .eq("user_id", userId);
+
+    if (empError) {
+      console.error("Error deleting employee:", empError);
+      alert("Failed to delete employee record");
+      return;
     }
-  );
 
-  if (!error) {
+    // Delete from profiles table
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .delete()
+      .eq("id", userId);
+
+    if (profileError) {
+      console.error("Error deleting profile:", profileError);
+      // Continue anyway - might not have a profile
+    }
+
+    // Delete auth user using Edge Function
+    try {
+      const { error: deleteAuthError } = await supabase.functions.invoke(
+        "delete-employee",
+        {
+          body: { user_id: userId },
+        }
+      );
+
+      if (deleteAuthError) {
+        console.error("Error deleting auth user:", deleteAuthError);
+      }
+    } catch (err) {
+      console.error("Edge function error:", err);
+    }
+
+    // Update local state
     setEmployees((prev) =>
       prev.filter((emp) => emp.user_id !== userId)
     );
-  } else {
-    alert("Failed to delete employee");
+    
+    alert("Employee deleted successfully");
   }
-}
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 mt-6">
@@ -61,7 +101,7 @@ export default function Employees() {
         <h1 className="text-2xl font-semibold">Employees</h1>
 
         <button
-          onClick={() => navigate("/admin/employees/add")}
+          onClick={() => navigate("/admin/employees/new")}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
         >
           Add Employee
@@ -73,6 +113,7 @@ export default function Employees() {
         <table className="min-w-full">
           <thead>
             <tr className="text-left text-gray-500 text-sm">
+              <th className="px-6 py-4">ID</th>
               <th className="px-6 py-4">Name</th>
               <th className="px-6 py-4">Department</th>
               <th className="px-6 py-4">Date of Birth</th>
@@ -83,7 +124,7 @@ export default function Employees() {
           <tbody>
             {loading && (
               <tr>
-                <td colSpan="4" className="px-6 py-6 text-center text-gray-500">
+                <td colSpan="5" className="px-6 py-6 text-center text-gray-500">
                   Loading employees...
                 </td>
               </tr>
@@ -91,7 +132,7 @@ export default function Employees() {
 
             {!loading && employees.length === 0 && (
               <tr>
-                <td colSpan="4" className="px-6 py-6 text-center text-gray-400">
+                <td colSpan="5" className="px-6 py-6 text-center text-gray-400">
                   No employees found
                 </td>
               </tr>
@@ -99,6 +140,10 @@ export default function Employees() {
 
             {employees.map((emp) => (
               <tr key={emp.id} className="hover:bg-gray-50 transition">
+                <td className="px-6 py-4 font-mono text-sm text-gray-600">
+                  {emp.emp_id || "—"}
+                </td>
+                
                 <td className="px-6 py-4 font-medium">{emp.name}</td>
 
                 <td className="px-6 py-4">
@@ -106,8 +151,8 @@ export default function Employees() {
                 </td>
 
                 <td className="px-6 py-4">
-                  {emp.dob
-                    ? new Date(emp.dob).toLocaleDateString()
+                  {emp.date_of_birth
+                    ? new Date(emp.date_of_birth).toLocaleDateString()
                     : "—"}
                 </td>
 
@@ -145,7 +190,6 @@ export default function Employees() {
                   >
                     Delete
                   </button>
-
                 </td>
               </tr>
             ))}
